@@ -32,7 +32,7 @@ module SchemaPlus
 
 
         def foreign_keys(table_name, name = nil)
-          results = execute("SHOW CREATE TABLE #{quote_table_name(table_name)}", name)
+          results = execute("SHOW CREATE TABLE #{quote_table_name(table_name)}", 'SCHEMA')
 
           foreign_keys = []
 
@@ -60,7 +60,7 @@ module SchemaPlus
         end
 
         def reverse_foreign_keys(table_name, name = nil)
-          results = execute(<<-SQL, name)
+          results = execute(<<-SQL, 'SCHEMA')
         SELECT constraint_name, table_name, column_name, referenced_table_name, referenced_column_name
           FROM information_schema.key_column_usage
          WHERE table_schema = SCHEMA()
@@ -86,14 +86,14 @@ module SchemaPlus
 
         def views(name = nil)
           views = []
-          execute("SELECT table_name FROM information_schema.views WHERE table_schema = SCHEMA()", name).each do |row|
+          execute("SELECT table_name FROM information_schema.views WHERE table_schema = SCHEMA()", 'SCHEMA').each do |row|
             views << row[0]
           end
           views
         end
 
-        def view_definition(view_name, name = nil)
-          result = execute("SELECT view_definition, check_option FROM information_schema.views WHERE table_schema = SCHEMA() AND table_name = #{quote(view_name)}", name)
+        def view_definition(view_name)
+          result = execute("SELECT view_definition, check_option FROM information_schema.views WHERE table_schema = SCHEMA() AND table_name = #{quote(view_name)}", 'SCHEMA')
           return nil unless (result.respond_to?(:num_rows) ? result.num_rows : result.to_a.size) > 0 # mysql vs mysql2
           row = result.respond_to?(:fetch_row) ? result.fetch_row : result.first
           sql = row[0]
